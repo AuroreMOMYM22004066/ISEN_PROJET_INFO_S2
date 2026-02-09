@@ -86,6 +86,7 @@ typedef struct assign {
 
 typedef struct {
     char nameCultLeader[NAME_SIZE];
+    char nameCult[NAME_SIZE];
     char ideology[IDEOLOGY_SIZE];
     int elapsedTime; 
     float funds;
