@@ -16,5 +16,11 @@
 #define NB_ROUNDS_FAST_GAME 10
 
 #define PATH_SAVE "save.txt"
+#define PATH_ACTIVITIES "assets/config/activities.cfg"
+#define PATH_EVENTS "assets/config/events.cfg"
+#define PATH_TYPE "assets/config/types.cfg"
+#define PATH_ELITES_PROFIL "assets/config/profil_members/elites.cfg"
+#define PATH_MARGINAUX_PROFIL "assets/config/profil_members/marginaux.cfg"
+#define PATH_ORDINARY_PROFIL "assets/config/profil_members/ordinary.cfg"
 
 #endif

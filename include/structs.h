@@ -20,12 +20,13 @@ typedef struct {
     float control; //impact sur le control d'un membre sert au calcul d'évolution des stats 
 } IMPACT;
 
-typedef struct {
+typedef struct event {
     char name[NAME_SIZE];
     char description[DESC_EVENT_SIZE];
     CONDITION * sponCondition;
     CONDITION * successCondition;
-    IMPACT * impact; 
+    IMPACT * impact;
+    struct event *next;     
 } EVENT;
 
 
@@ -37,7 +38,8 @@ typedef struct {
 typedef struct member {
     char name[NAME_SIZE];
     char description[DESC_MEMBER_SIZE];
-    IMPACT impact; 
+    float spawnChance;  
+    IMPACT impact; // pour les ranger dans le groupe par type on utilisera les stats dans impact commune a un meme type 
     float control; // a quel point il est sous l'emprise 
     // ATTENTION member.control != member.impact.control
     // member.control = control exerce sur le membres de la secte
@@ -69,14 +71,15 @@ typedef struct activity {
 typedef struct assign {
     ACTIVITY activity;
     GROUP* group;
-    int time; //temps ecoule depuis le debut de l'activite != activity.time qui est le temps que prend un activité pour se réaliser
+    int time; //temps ecoule depuis le debut de l'activite != activity.time qui est le temps que prend une activité pour se réaliser
     int isSuccess; // TRUE OR FALSE
     struct assign *next;
-    struct assign *previous;
+    //struct assign *previous;
 } ASSIGN;
 
 typedef struct {
     char nameCultLeader[NAME_SIZE];
+    char nameCult[NAME_SIZE];
     char ideology[IDEOLOGY_SIZE];
     int elapsedTime; 
     float funds;
