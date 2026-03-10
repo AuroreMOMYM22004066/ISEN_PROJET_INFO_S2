@@ -39,8 +39,9 @@ CULT * initCult(void){
     scanf("%s",nouveauCult->nameCult);
     printf("\nQu elle est l ideologie de la Secte %s?\n> ", nouveauCult->nameCult);
     scanf("%s",nouveauCult->ideology);
-    
+
     nouveauCult->elapsedTime = 0;
+    nouveauCult->pa = NB_PA;
     nouveauCult->funds = 0.0f;
     nouveauCult->members = NULL;
     nouveauCult->assigns = NULL;

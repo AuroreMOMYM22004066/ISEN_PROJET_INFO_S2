@@ -59,14 +59,16 @@ GROUP *initPeoplesProfils(void)
                     typeImpact.illegality = atof(value);
                 else if (strcmp(key, "fund") == 0)
                     typeImpact.fund = atof(value);
+                else if (strcmp(key, "control") == 0)
+                    control = atof(value);
                 else if (strcmp(key, "file") == 0)
                 {
+                    trim(value);
+                    value[strcspn(value, "\r\n")] = 0;  // <- supprime \r et \n
                     snprintf(typeFile, sizeof(typeFile), "assets/config/%s", value);
-
-                    // Ouvrir le fichier des profils
+                    printf("Ouverture du fichier membre : '%s'\n", typeFile);
                     FILE *memberFile = fopen(typeFile, "r");
-                    if (!memberFile)
-                    {
+                    if (memberFile == NULL){
                         printf("Impossible d'ouvrir %s\n", typeFile);
                         continue;
                     }
@@ -139,6 +141,7 @@ GROUP *initPeoplesProfils(void)
     fclose(file);
     return allGroups;
 }
+
 /* -------------------------------------------------- */
 /* Ajoute un groupe en tête                           */
 /* -------------------------------------------------- */
@@ -240,16 +243,62 @@ GROUP *addMemberToGroup(GROUP *group, MEMBER *member)
 }
 
 /* -------------------------------------------------- */
-/* Vérifie si la liste est vide                        */
+/* Crée un nouveau MEMBER depuis la conf              */
+/* -------------------------------------------------- */
+MEMBER *cloneMember(MEMBER *proto)
+{
+    if (proto == NULL) return NULL;
+
+    MEMBER *newMember = malloc(sizeof(MEMBER));
+    if (!newMember) return NULL;
+
+    *newMember = *proto;   // copie complète de la structure
+
+    return newMember;
+}
+
+/* -------------------------------------------------- */
+/* Vérification sur la liste                          */
 /* -------------------------------------------------- */
 int isEmptyGroup(GROUP *head){
     return head == NULL;
 }
 
+int isMemberAvailable(MEMBER * member, ASSIGN * assign){
+    if(member == NULL || assign == NULL){
+        return TRUE;
+    }
 
+    int isAvailable = TRUE;
+    ASSIGN * current = assign;
+    while(current != NULL){
+        // si activity en cours et membre present dans le group false
+        if(!isAssignFinished(current) && isMemberIsInGroup(member, current->group)){ 
+            return FALSE;
+        }
+        current = current->next;
+    }
+
+    return isAvailable;
+}
+
+int isMemberIsInGroup(MEMBER * member, GROUP * group){
+    if(member == NULL || group == NULL){
+        return FALSE;
+    }
+
+    GROUP * current = group;
+    while(current != NULL && current->member != NULL){
+        if(member == current->member){ // on compare les adr memoire
+            return TRUE;
+        }  
+        current = current->next;
+    }
+    return FALSE;
+}
 
 /* -------------------------------------------------- */
-/* Affiche un membre                                 */
+/* Affiche un membre                                  */
 /* -------------------------------------------------- */
 void showMember(MEMBER *member)
 {
@@ -272,8 +321,7 @@ void showMember(MEMBER *member)
 /* -------------------------------------------------- */
 /* Affiche un groupe (liste chaînée)                 */
 /* -------------------------------------------------- */
-void showGroup(GROUP *group)
-{
+void showGroup(GROUP *group){
     if (!group)
     {
         printf("Le groupe est vide.\n");
@@ -292,3 +340,4 @@ void showGroup(GROUP *group)
         count++;
     }
 }
+

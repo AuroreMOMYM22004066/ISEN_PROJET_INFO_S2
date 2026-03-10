@@ -82,6 +82,7 @@ typedef struct {
     char nameCult[NAME_SIZE];
     char ideology[IDEOLOGY_SIZE];
     int elapsedTime; 
+    int pa;
     float funds;
     GROUP * members;
     ASSIGN * assigns; 
@@ -93,5 +94,14 @@ typedef struct {
     GROUP *allPeoples; //ensemble des profils des personnes que l'on peut recruter
 } GAME_CONF;
 
+typedef struct {
+    WINDOW *statusWin;
+    WINDOW *actionWin;
+    WINDOW *memberWin;
+    WINDOW *logWin;
+
+    int selectedAction;
+    int memberOffset;
+} UI;
 
 #endif

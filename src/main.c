@@ -2,18 +2,14 @@
 #include "cult.h"
 
 int main(){
-    //printf("Hello");
-    //menu();
-    ACTIVITY * allActivities = initActivities();
-    showActivities(allActivities);
-    EVENT * allevents = initEvents();
-    showEvents(allevents);
-    GROUP * group = initPeoplesProfils();
-    showGroup(group);
-    ACTIVITY * act  = menuActivitity(allActivities);
 
-    showActivity(act);
+    srand(time(NULL));
 
-    initCult();
-    return 1;
+    CULT *cult = initCult();
+    GAME_CONF *conf = initConf();
+    //showGroup(conf->allPeoples);
+
+    runGameUI(cult, conf);
+
+    return 0;
 }

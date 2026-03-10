@@ -153,3 +153,20 @@ ACTIVITY *initActivities(void)
     fclose(file);
     return head;
 }
+
+void showActivities(ACTIVITY * activity){
+    while (activity != NULL){
+        showActivity(activity);
+        activity = activity->next;
+    }
+}
+
+void showActivity(ACTIVITY * activity){
+    if (activity != NULL){
+        printf("Nom : %s\n",activity->name);
+        printf("Description : %s\n",activity->description);
+        printf("Time : %d\n",activity->time);
+        printf("count : %f\n",activity->cost);
+        printf("PA : %d\n\n",activity->PA);
+    }
+}
