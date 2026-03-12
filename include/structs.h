@@ -52,7 +52,7 @@ typedef struct group {
     struct group *previous;
 } GROUP;
 
-typedef struct activity {
+typedef struct {
     char name[NAME_SIZE];
     char description[DESC_ACTIVITY_SIZE];
     IMPACT impactSuccess;
@@ -62,14 +62,18 @@ typedef struct activity {
     int time;
     int PA;// point d'action qu'elle coute
     float cost; //couts
-    struct activity *next;
     //struct activity *previous;
     //pas necessaire de la double chaine car la liste n'évoluera pas dans le temps 
     //elle dépent juste des .conf
 } ACTIVITY;
 
+typedef struct activity_node{
+    ACTIVITY *activity;
+    struct activity_node *next;
+} ACTIVITY_NODE;
+
 typedef struct assign {
-    ACTIVITY activity;
+    ACTIVITY* activity;
     GROUP* group;
     int time; //temps ecoule depuis le debut de l'activite != activity.time qui est le temps que prend une activité pour se réaliser
     int isSuccess; // TRUE OR FALSE
@@ -89,7 +93,7 @@ typedef struct {
 } CULT;
 
 typedef struct {
-    ACTIVITY *allActivities;
+    ACTIVITY_NODE *allActivities;
     EVENT *allEvents;
     GROUP *allPeoples; //ensemble des profils des personnes que l'on peut recruter
 } GAME_CONF;
@@ -99,9 +103,11 @@ typedef struct {
     WINDOW *actionWin;
     WINDOW *memberWin;
     WINDOW *logWin;
-
     int selectedAction;
     int memberOffset;
+    int assignOffset; 
 } UI;
+
+
 
 #endif

@@ -7,9 +7,11 @@
 // actions principales
 char *actions[] = {
     "Recruter un membre",
-    "Assigner activite"
+    "Assigner activite",
+    "Passer au jour suivant"
 };
-int actionCount = 2;
+int actionCount = 3;
+
 
 
 // ---------- INIT & END ----------
@@ -27,15 +29,12 @@ void endUI() {
     endwin();
 }
 
-
 // ---------- CREATE WINDOWS ----------
 void createWindows(UI *ui) {
-
-    int h_status = 5;
+    int h_status = 7;
     int h_actions = 10;
     int h_members = 10;
     int h_log = 5;
-
     int w = COLS;
 
     ui->statusWin = newwin(h_status, w, 0, 0);
@@ -44,10 +43,8 @@ void createWindows(UI *ui) {
     ui->logWin = newwin(h_log, w, h_status + h_actions, 0);
 }
 
-
 // ---------- DRAW LAYOUT ----------
 void drawLayout(UI *ui) {
-
     box(ui->statusWin, 0, 0);
     box(ui->actionWin, 0, 0);
     box(ui->memberWin, 0, 0);
@@ -56,7 +53,7 @@ void drawLayout(UI *ui) {
     mvwprintw(ui->statusWin, 0, 2, " CULT STATUS ");
     mvwprintw(ui->actionWin, 0, 2, " ACTIONS ");
     mvwprintw(ui->memberWin, 0, 2, " MEMBERS ");
-    mvwprintw(ui->logWin, 0, 2, " LOG / EVENTS ");
+    mvwprintw(ui->logWin, 0, 2, " ACTIVITES EN COURS ");
 
     wrefresh(ui->statusWin);
     wrefresh(ui->actionWin);
@@ -64,20 +61,29 @@ void drawLayout(UI *ui) {
     wrefresh(ui->logWin);
 }
 
-
 // ---------- DRAW STATUS ----------
 void drawStatus(UI *ui, CULT *cult) {
 
     werase(ui->statusWin);
     box(ui->statusWin,0,0);
 
-    mvwprintw(ui->statusWin,1,2,"Legitimite : %.2f", getLegitimity(cult));
-    mvwprintw(ui->statusWin,2,2,"Visibilite : %.2f", getVisibility(cult));
-    mvwprintw(ui->statusWin,3,2,"Controle : %.2f", getControl(cult));
+    int mid = COLS/2;
+
+    // ---- Bloc gauche : infos culte ----
+    mvwprintw(ui->statusWin,1,2,"Secte : %s", cult->nameCult);
+    mvwprintw(ui->statusWin,2,2,"Gourou : %s", cult->nameCultLeader);
+
+    mvwprintw(ui->statusWin,3,2,"Legitimite : %.2f / %d", getLegitimity(cult), MAX_LEGITIMITY);
+    //drawProgressBar(ui->statusWin,3,15,20,getLegitimity(cult));
+
+    // ---- Bloc droite : stats ----
+    mvwprintw(ui->statusWin,1,mid,"Visibilite : %.2f", getVisibility(cult));
+    mvwprintw(ui->statusWin,2,mid,"Controle : %.2f", getControl(cult));
+    mvwprintw(ui->statusWin,3,mid,"Jour : %d | PA : %d", cult->elapsedTime, cult->pa);
+    mvwprintw(ui->statusWin,4,mid,"Fonds : %.2f", cult->funds);
 
     wrefresh(ui->statusWin);
 }
-
 
 // ---------- DRAW ACTIONS ----------
 void drawActions(UI *ui) {
@@ -98,7 +104,6 @@ void drawActions(UI *ui) {
     wrefresh(ui->actionWin);
 }
 
-
 // ---------- DRAW MEMBERS ----------
 void drawMembers(UI *ui, CULT *cult) {
 
@@ -116,7 +121,7 @@ void drawMembers(UI *ui, CULT *cult) {
 
         if(idx >= ui->memberOffset) {
 
-            mvwprintw(ui->memberWin,y,2,"%s Ctrl: %.2f Etat: %s",
+            mvwprintw(ui->memberWin,y,2,"%s Control: %.2f Etat: %s",
                 current->member->name,
                 current->member->control,
                 isMemberAvailable(current->member, cult->assigns)?"Libre":"Occupe");
@@ -134,33 +139,86 @@ void drawMembers(UI *ui, CULT *cult) {
     wrefresh(ui->memberWin);
 }
 
+// ---------- DRAW PROGRESS BAR ----------
+void drawProgressBar(WINDOW *win, int y, int x, int width, float value){
+    int filled = (int)(value * width);
 
+    mvwprintw(win, y, x, "[");
+
+    for(int i=0;i<width;i++){
+        if(i < filled)
+            waddch(win, '#');
+        else
+            waddch(win, '-');
+    }
+
+    waddch(win, ']');
+}
+
+// ---------- DRAW ASSIGN ---------- 
+void drawAssigns(UI *ui, CULT *cult){
+    if(ui == NULL || cult == NULL) return;
+
+    werase(ui->logWin);
+    box(ui->logWin,0,0);
+
+    mvwprintw(ui->logWin,0,2," ACTIVITES EN COURS ");
+
+    ASSIGN *current = cult->assigns;
+    int y = 1;
+
+    while(current != NULL && y < 4){
+
+        if(current->activity && current->group){
+
+            int remaining = current->activity->time - current->time;
+
+            GROUP *g = current->group;
+
+            char names[100] = "";
+            char buffer[32];
+
+            while(g){
+                snprintf(buffer,sizeof(buffer),"%s ",g->member->name);
+                strcat(names,buffer);
+                g = g->next;
+            }
+
+            mvwprintw(ui->logWin,y,2,"%s (%d j)",current->activity->name,remaining);
+            y++;
+
+            mvwprintw(ui->logWin,y,4,"%s",names);
+            y++;
+        }
+
+        current = current->next;
+    }
+        
+    if(current != NULL)
+        mvwprintw(ui->logWin,y,2,"...");
+
+    wrefresh(ui->logWin);
+}
 // ---------- EVENT POPUP ----------
 void showEventPopup(char *title, char *desc) {
-
     int h = 10, w = 50;
-
     int y = (LINES - h)/2;
     int x = (COLS - w)/2;
-
     WINDOW *popup = newwin(h,w,y,x);
 
     box(popup,0,0);
-
     wattron(popup,COLOR_PAIR(1));
     mvwprintw(popup,1,(w - strlen(title))/2,"%s",title);
     wattroff(popup,COLOR_PAIR(1));
 
     mvwprintw(popup,3,2,"%s",desc);
     mvwprintw(popup,h-2,10,"Appuyez sur ENTER");
-
     wrefresh(popup);
 
     while(getch()!='\n');
 
     delwin(popup);
 }
-
 
 // ---------- SELECT MEMBER POPUP ----------
 MEMBER *selectMemberPopup(GROUP *list) {
@@ -189,7 +247,7 @@ MEMBER *selectMemberPopup(GROUP *list) {
 
         mvwprintw(popup, 1, 2, "Choisir un nouveau membre");
 
-        // Parcourir la liste pour afficher
+        // Affichage des membres
         GROUP *iter = list;
         int idx = 0;
         while(iter) {
@@ -232,7 +290,7 @@ MEMBER *selectMemberPopup(GROUP *list) {
             if(selectedIndex == totalCount)
                 return NULL; // "Ne plus recruter"
             
-            // Parcourir la liste pour retourner le membre sélectionné
+            // Retourner le membre sélectionné
             iter = list;
             idx = 0;
             while(idx < selectedIndex && iter) {
@@ -240,6 +298,178 @@ MEMBER *selectMemberPopup(GROUP *list) {
                 idx++;
             }
             return iter ? iter->member : NULL;
+        }
+    }
+}
+
+
+GROUP *selectMembersPopup(GROUP *list){
+
+    if(!list) return NULL;
+
+    int count=0;
+    GROUP *tmp=list;
+
+    while(tmp){
+        count++;
+        tmp=tmp->next;
+    }
+
+    int selected[count];
+    memset(selected,0,sizeof(selected));
+
+    int index=0;
+
+    WINDOW *popup=newwin(count+6,50,(LINES-(count+6))/2,(COLS-50)/2);
+    keypad(popup,TRUE);
+
+    while(1){
+
+        werase(popup);
+        box(popup,0,0);
+
+        mvwprintw(popup,1,2,"Selectionner membres (SPACE)");
+
+        GROUP *iter=list;
+        int i=0;
+
+        while(iter){
+
+            if(i==index) wattron(popup,A_REVERSE);
+
+            mvwprintw(popup,3+i,2,"[%c] %s",
+                selected[i]?'x':' ',
+                iter->member->name);
+
+            if(i==index) wattroff(popup,A_REVERSE);
+
+            iter=iter->next;
+            i++;
+        }
+
+        mvwprintw(popup,count+4,2,"ENTER pour valider");
+
+        wrefresh(popup);
+
+        int ch=wgetch(popup);
+
+        if(ch==KEY_UP){
+            index--;
+            if(index<0) index=0;
+        }
+
+        if(ch==KEY_DOWN){
+            index++;
+            if(index>=count) index=count-1;
+        }
+
+        if(ch==' '){
+            selected[index]=!selected[index];
+        }
+
+        if(ch=='\n') break;
+    }
+
+    delwin(popup);
+
+    GROUP *result=NULL;
+    GROUP *tail=NULL;
+
+    GROUP *iter=list;
+    int i=0;
+
+    while(iter){
+
+        if(selected[i]){
+
+            GROUP *node=malloc(sizeof(GROUP));
+            node->member=iter->member;
+            node->next=NULL;
+
+            if(!result) result=node;
+            else tail->next=node;
+
+            tail=node;
+        }
+
+        iter=iter->next;
+        i++;
+    }
+
+    return result;
+}
+
+// ---------- SELECT ACTIVITY POPUP ----------
+ACTIVITY *selectActivityPopup(ACTIVITY_NODE *list){
+    if(list == NULL){
+        return NULL;
+    }
+
+    int index = 0;
+    int count = 0;
+    ACTIVITY_NODE *current = list;
+
+    while(current != NULL){
+        count++;
+        current = current->next;
+    }
+
+    WINDOW *popup = newwin(count+6,60,(LINES-(count+6))/2,(COLS-60)/2);
+    keypad(popup,TRUE);
+
+    while(1){
+
+        werase(popup);
+        box(popup,0,0);
+
+        mvwprintw(popup,1,2,"Choisir une activite");
+
+        ACTIVITY_NODE *iter = list;
+        int i = 0;
+
+        while(iter){
+
+            if(i==index)
+                wattron(popup,A_REVERSE);
+
+            mvwprintw(popup,3+i,2,"%s (PA:%d $%.1f)",
+                iter->activity->name,
+                iter->activity->PA,
+                iter->activity->cost);
+
+            if(i==index)
+                wattroff(popup,A_REVERSE);
+
+            iter=iter->next;
+            i++;
+        }
+
+        wrefresh(popup);
+
+        int ch = wgetch(popup);
+
+        if(ch==KEY_UP){
+            index--;
+            if(index<0) index=0;
+        }
+
+        if(ch==KEY_DOWN){
+            index++;
+            if(index>=count) index=count-1;
+        }
+
+        if(ch=='\n'){
+
+            ACTIVITY_NODE *sel = list;
+            int i=0;
+
+            while(i<index && sel){
+                sel=sel->next;
+                i++;
+            }
+
+            delwin(popup);
+            return sel->activity;
         }
     }
 }
@@ -282,53 +512,179 @@ int confirmPopup(char *text){
 }
 
 
+// ---------- RECRUITMENT HANDLER ----------
+void handleRecruitment(CULT *cult, GAME_CONF *conf) {
+    if(cult->pa < 1){
+        showEventPopup("PA insuffisants", "Vous n'avez pas assez de PA pour cette action.");
+        return;
+    }
+    cult->pa -= 1; // coût de génération de la liste
+
+    GROUP *spawnList = generateSpawnMember(conf);
+    if(spawnList == NULL){
+        showEventPopup("Recrutement", "Personne ne souhaite rejoindre votre culte.");
+        return;
+    }
+
+    int recruiting = 1;
+    while(recruiting){
+        MEMBER *selected = selectMemberPopup(spawnList);
+        if(selected == NULL) break; // annuler
+
+        int confirm = confirmPopup("Recruter ce membre ?");
+        if(confirm){
+            MEMBER *newMember = cloneMember(selected);
+            cult->members = addMemberToGroup(cult->members, newMember);
+            showEventPopup("Succes", "Le membre rejoint votre culte !");
+            recruiting = 0;
+        }
+    }
+}
+
+
+// ---------- ACTIVITY HANDLER ----------
+void handleActivity(CULT *cult, GAME_CONF *conf){
+    ACTIVITY_NODE *available = getAvailableActivities(cult,conf);
+
+    if(available == NULL){
+        showEventPopup("Activite","Aucune activite disponible.");
+        return;
+    }
+
+    ACTIVITY *act = selectActivityPopup(available);
+    freeActivityNodes(available);
+    if(act == NULL) return;
+
+    if(cult->pa < act->PA){
+        showEventPopup("PA insuffisants","Vous n'avez pas assez de PA pour cette action.");
+        return;
+    }
+
+    if(cult->funds < act->cost){
+        showEventPopup("Fonds insuffisants","Vous n'avez pas assez d'argent.");
+        return;
+    }
+
+    GROUP *freeMembers = getFreeMembers(cult);
+    if(!freeMembers){
+        showEventPopup("Membres","Aucun membre disponible.");
+        return;
+    }
+
+    GROUP *group = selectMembersPopup(freeMembers); // multi-sélection possible
+    if(group == NULL){
+        showEventPopup("Activite","Aucun membre selectionne.");
+        return;
+    }
+
+    ASSIGN *assign = assignActivityMembers(act, group);
+    if(assign == NULL) return;
+
+    cult->assigns = addAssign(cult, assign);
+
+    cult->pa -= act->PA;
+    cult->funds -= act->cost;
+
+    showEventPopup("Activite","Activite lancee !");
+}
+
+// ---------- PASSER AU JOUR SUIVANT ----------
+void handleNextDay(CULT *cult){
+    if(cult == NULL){
+        return;
+    }
+
+    cult->elapsedTime += 1;
+    cult->pa = NB_PA;
+    ASSIGN *currentAssign = cult->assigns;
+    while (currentAssign != NULL){
+        if(currentAssign->activity != NULL && !isAssignFinished(currentAssign)){
+            currentAssign->time += 1;
+        }
+        currentAssign = currentAssign->next;
+    }
+
+    GROUP *currentMember = cult->members;
+    while (currentMember != NULL){
+        if(currentMember->member != NULL){
+            cult->funds += currentMember->member->impact.fund;
+        }
+        currentMember = currentMember->next;
+    }
+    
+    showEventPopup("Nouveau jour", "Les PA ont été réinitialisés.");
+}
+
+
 // ---------- HANDLE ACTION ----------
 void handleAction(int action, CULT *cult, GAME_CONF *conf){
-
     switch(action){
-        case 0: {
-
-            GROUP *spawnList = generateSpawnMember(conf);
-
-            if(spawnList == NULL){
-                showEventPopup("Recrutement", "Personne ne souhaite rejoindre votre culte.");
-                return;
-            }
-
-            int recruiting = 1;
-
-            while(recruiting){
-
-                MEMBER *selected = selectMemberPopup(spawnList);
-
-                if(selected == NULL)  // joueur a choisi "ne plus recruter"
-                    break;
-
-                int confirm = confirmPopup("Recruter ce membre ?");
-
-                if(confirm){
-
-                    MEMBER *newMember = cloneMember(selected);
-
-                    cult->members = addMemberToGroup(cult->members, newMember);
-
-                    showEventPopup("Succes", "Le membre rejoint votre culte !");
-
-                    recruiting = 0; // on sort après recrutement
-                }
-            }
-
+        case 0: 
+            handleRecruitment(cult, conf); 
             break;
-        }
-        
-        case 1:
-            showEventPopup("Activite", "Systeme d'activite pas encore implemente.");
+        case 1: 
+            handleActivity(cult, conf); 
+            break;
+        case 2: 
+            handleNextDay(cult); 
+            runEvent(cult, conf);
             break;
     }
 }
 
 
 
+
+// ---------- GAME LOOP ----------
+void runGameUI(CULT *cult, GAME_CONF *conf){
+    UI ui;
+    ui.selectedAction = 0;
+    ui.memberOffset = 0;
+
+    
+    cult->pa = NB_PA; // PA initial
+    initUI();
+    createWindows(&ui);
+
+    while(1){        
+        updateScreen(&ui, cult);
+        int ch = getch();
+        if(ch == 27) break; // ESC
+
+        switch(ch){
+            case KEY_UP:
+                ui.selectedAction--;
+                if(ui.selectedAction < 0) ui.selectedAction = 0;
+                break;
+            case KEY_DOWN:
+                ui.selectedAction++;
+                if(ui.selectedAction >= actionCount)
+                    ui.selectedAction = actionCount-1;
+                break;
+            case KEY_NPAGE:
+                ui.memberOffset += 8;
+                break;
+            case KEY_PPAGE:
+                ui.memberOffset -= 8;
+                if(ui.memberOffset < 0) ui.memberOffset = 0;
+                break;
+            case '\n':
+                handleAction(ui.selectedAction, cult, conf);
+                break;
+        }
+    }
+    endUI();
+}
+
+void runEvent(CULT *cult, GAME_CONF *conf){
+    EVENT *event = getEvent(cult, conf);
+    if(event != NULL){
+        showEventPopup(event->name, event->description);
+
+        // appliquer impact
+        //cult->funds += event->impact->fund;
+    } 
+}
 
 
 // ---------- UPDATE SCREEN ----------
@@ -340,56 +696,5 @@ void updateScreen(UI *ui, CULT *cult){
     drawStatus(ui, cult);
     drawActions(ui);
     drawMembers(ui, cult);
-}
-
-
-// ---------- GAME LOOP ----------
-void runGameUI(CULT *cult, GAME_CONF *conf){
-
-    UI ui;
-
-    ui.selectedAction = 0;
-    ui.memberOffset = 0;
-
-    initUI();
-    createWindows(&ui);
-
-    while(1){
-
-        updateScreen(&ui, cult);
-
-        int ch = getch();
-
-        if(ch == 27)
-            break;
-
-        switch(ch){
-
-            case KEY_UP:
-                ui.selectedAction--;
-                if(ui.selectedAction < 0) ui.selectedAction = 0;
-                break;
-
-            case KEY_DOWN:
-                ui.selectedAction++;
-                if(ui.selectedAction >= actionCount)
-                    ui.selectedAction = actionCount-1;
-                break;
-
-            case KEY_NPAGE:
-                ui.memberOffset += 8;
-                break;
-
-            case KEY_PPAGE:
-                ui.memberOffset -= 8;
-                if(ui.memberOffset < 0) ui.memberOffset = 0;
-                break;
-
-            case '\n':
-                handleAction(ui.selectedAction, cult, conf);
-                break;
-        }
-    }
-
-    endUI();
+    drawAssigns(ui, cult);
 }

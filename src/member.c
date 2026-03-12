@@ -297,6 +297,16 @@ int isMemberIsInGroup(MEMBER * member, GROUP * group){
     return FALSE;
 }
 
+
+int isMembersEquals(MEMBER * member1, MEMBER * member2){
+    if(member1 == NULL || member2 == NULL) {
+        return 0;
+    }
+    int result = 1;
+    //TODO
+}
+
+
 /* -------------------------------------------------- */
 /* Affiche un membre                                  */
 /* -------------------------------------------------- */
@@ -341,3 +351,17 @@ void showGroup(GROUP *group){
     }
 }
 
+
+GROUP *getFreeMembers(CULT *cult){
+    GROUP *head = NULL;
+    GROUP *current = cult->members;
+
+    while(current){
+
+        if(isMemberAvailable(current->member,cult->assigns)){
+           head = addMemberToGroup(head, current->member);
+        }
+        current = current->next;
+    }
+    return head;
+}

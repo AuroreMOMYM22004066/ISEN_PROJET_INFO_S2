@@ -22,7 +22,7 @@ void menuLoad();
 int isSpawnConditionChecked(CULT *cult, CONDITION *cond); // vallable pour les events et les activities
 int isSuccessConditionChecked(GROUP * group, CONDITION *cond);
 
-ACTIVITY* menuActivitity(ACTIVITY * activity); // choisir une activité prend en param la liste d'activité return null si aucune choisis
+ACTIVITY_NODE* menuActivitity(ACTIVITY_NODE* activity);// choisir une activité prend en param la liste d'activité return null si aucune choisis
 
 void playGame(CULT * cult, GAME_CONF * conf);
 void playFastGame(CULT * Cult, GAME_CONF * conf, int nbRounds); //mettre genre 10 tours pour une partie rapide 
@@ -53,16 +53,17 @@ float getVisibility(CULT *culte);
 float getVisibilityOfMembers(GROUP * members);
 float getVisibilityOfAssigns(ASSIGN * activities);
 float getControl(CULT *culte);
+float getIllegalityOfGroup(GROUP *group);
 
 /**
  * activity.c
  */
-ACTIVITY * initActivities(void);
+ACTIVITY_NODE * initActivities(void);
 ACTIVITY * addActivity(ACTIVITY * activity);
-ACTIVITY * removeActivity(ACTIVITY * activity);
+ACTIVITY_NODE *getAvailableActivities(CULT *cult, GAME_CONF *conf);
 void showActivity(ACTIVITY * activity);
-void showActivities(ACTIVITY * activity);
-
+void showActivities(ACTIVITY_NODE * activity);
+void freeActivityNodes(ACTIVITY_NODE *list);
 /**
  * event.c
  */
@@ -91,6 +92,7 @@ int getNbMemberFromGroup(GROUP * group);
 int getnbMemberTypeFromGroup(GROUP * group, char type[TYPE_SIZE]); // changer le type pour un int
 void showGroup(GROUP * group);
 void showMember(MEMBER * member);
+GROUP *getFreeMembers(CULT *cult);
 
 /**
  * assign.c
@@ -99,6 +101,8 @@ ASSIGN * assignActivityMembers(ACTIVITY *activity, GROUP *group);
 int isAssignFinished(ASSIGN * assign);
 void showOneAssign(ASSIGN * assign);
 void showAssigns();
+ASSIGN * addAssign(CULT *cult, ASSIGN *assign);
+
 
 
 
@@ -117,19 +121,29 @@ void applyImpact();
 void initUI();
 void endUI();
 void createWindows(UI *ui);
-void drawLayout();
+void drawLayout(UI *ui);
 void drawStatus(UI *ui, CULT *cult);
 void drawActions(UI *ui);
 void drawMembers(UI *ui, CULT *cult);
+void drawAssigns(UI *ui, CULT *cult);
+void drawProgressBar(WINDOW *win, int y, int x, int width, float value);
 void showEventPopup(char *title, char *desc);
+MEMBER *selectMemberPopup(GROUP *list);
+GROUP *selectMembersPopup(GROUP *list);
+ACTIVITY *selectActivityPopup(ACTIVITY_NODE *list);
+int confirmPopup(char *text);
+
 
 void handleInput(int ch);
 
-MEMBER *selectMemberPopup(GROUP *list);
-int confirmPopup(char *text);
+void handleRecruitment(CULT *cult, GAME_CONF *conf);
+void handleActivity(CULT *cult, GAME_CONF *conf);
+void handleNextDay(CULT *cult);
 void handleAction(int action, CULT *cult, GAME_CONF *conf);
 void runGameUI(CULT *cult, GAME_CONF *conf);
-
+void runEvent(CULT *cult, GAME_CONF *conf);
 void updateScreen(UI *ui, CULT *cult);
 
 #endif
+
+

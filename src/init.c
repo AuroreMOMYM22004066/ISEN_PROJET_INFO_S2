@@ -40,9 +40,9 @@ CULT * initCult(void){
     printf("\nQu elle est l ideologie de la Secte %s?\n> ", nouveauCult->nameCult);
     scanf("%s",nouveauCult->ideology);
 
-    nouveauCult->elapsedTime = 0;
+    nouveauCult->elapsedTime = 1;
     nouveauCult->pa = NB_PA;
-    nouveauCult->funds = 0.0f;
+    nouveauCult->funds = 5.0f;
     nouveauCult->members = NULL;
     nouveauCult->assigns = NULL;
     return nouveauCult;
@@ -55,7 +55,7 @@ GAME_CONF * initConf(){
 
     if(conf == NULL) return NULL;
 
-    ACTIVITY * activities = initActivities();
+    ACTIVITY_NODE * activities = initActivities();
     //showActivities(activities);
     EVENT * events = initEvents();
     //showEvents(events);

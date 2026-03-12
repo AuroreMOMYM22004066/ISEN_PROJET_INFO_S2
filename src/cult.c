@@ -80,20 +80,27 @@ void playFastGame(CULT * Cult, GAME_CONF * conf, int nbRounds){
 }
 
 
-ACTIVITY* menuActivitity(ACTIVITY* activity)
+ACTIVITY_NODE* menuActivitity(ACTIVITY_NODE* activity)
 {
     if (activity == NULL) {
         printf("Aucune activite disponible.\n");
         return NULL;
     }
     printf("\n=== CHOIX DE L'ACTIVITE ===\n");
-    ACTIVITY* actuel = activity;
+    ACTIVITY_NODE* actuel = activity;
     int count = 0;
 
     while (actuel != NULL) {
-        printf("%d - %s\n", count + 1, actuel->name);
-        actuel = actuel->next;
-        count++;
+        if(actuel->activity != NULL){
+            printf("%d - %s\n", count + 1, actuel->activity->name);
+            actuel = actuel->next   ;
+            count++;
+        }
+    }
+    
+    if (count == 0) {
+        printf("Aucune activite disponible.\n");
+        return NULL;
     }
     int choice;
     printf("Voici les propositions suivantes :\n");
@@ -124,10 +131,13 @@ int isSpawnConditionChecked(CULT *cult, CONDITION *cond){
         g = g->next;
     }
 
-    if (memberCount < cond->minMember) return 0;
-    if (memberCount > cond->maxMember) return 0;
-
+    //if (memberCount < cond->minMember) return 0;
+    //if (memberCount > cond->maxMember) return 0;
     //TODO ajouter le reste des stats 
+
+    if(getLegitimity(cult) < cond->minLegitimity) return 0;
+    if(getVisibility(cult) < cond->minVisibility) return 0;
+    if(getIllegalityOfGroup(cult->members) < cond->minIllegality) return 0;
 
     return 1;
 }
@@ -178,9 +188,9 @@ float getLegitimityOfAssigns(ASSIGN *activities){
     {
         if (isAssignFinished(current)){
             if (current->isSuccess){
-                legitimity += current->activity.impactSuccess.legitimity;
+                legitimity += current->activity->impactSuccess.legitimity;
             } else {
-                legitimity += current->activity.impactFailed.legitimity;
+                legitimity += current->activity->impactFailed.legitimity;
             } 
             count++;
         }
@@ -232,9 +242,9 @@ float getVisibilityOfAssigns(ASSIGN *activities){
     {
         if (isAssignFinished(current)){
             if (current->isSuccess){
-                visibility += current->activity.impactSuccess.visibility;
+                visibility += current->activity->impactSuccess.visibility;
             } else {
-                visibility += current->activity.impactFailed.visibility;
+                visibility += current->activity->impactFailed.visibility;
             }
             count++; // on ne compte que les activité fini pas celle en cours
         }
@@ -264,6 +274,21 @@ float getControl(CULT *culte){
     return total / count;
 }
 
+float getIllegalityOfGroup(GROUP *group){
+    if(group == NULL){
+        return 0.0;
+    }
+
+    GROUP *current = group;
+    float result = 0;
+    while(current != NULL){
+        if(group->member != NULL){
+            result += group->member->impact.illegality;
+        }
+            current = current->next;
+    }
+    return result;
+}
 
 
 MEMBER * hireMember(GAME_CONF * conf){

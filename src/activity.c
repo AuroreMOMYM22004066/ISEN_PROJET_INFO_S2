@@ -4,8 +4,7 @@
 /* -------------------------------------------------- */
 /* Initialise les activités depuis activities.cfg    */
 /* -------------------------------------------------- */
-ACTIVITY *initActivities(void)
-{
+ACTIVITY_NODE *initActivities(void){
     FILE *file = fopen(PATH_ACTIVITIES, "r");
     if (!file)
     {
@@ -13,20 +12,19 @@ ACTIVITY *initActivities(void)
         return NULL;
     }
 
-    ACTIVITY *head = NULL;
+    ACTIVITY_NODE *head = NULL;
+    ACTIVITY_NODE *tail = NULL;
     ACTIVITY *current = NULL;
+
     char line[256];
 
     while (fgets(line, sizeof(line), file))
     {
-        // Supprime retour ligne
         line[strcspn(line, "\n")] = 0;
 
-        // Ignore commentaires et lignes vides
         if (line[0] == '#' || strlen(line) == 0)
             continue;
 
-        // Nouvelle activité
         if (strcmp(line, "[activity]") == 0)
         {
             ACTIVITY *newActivity = calloc(1, sizeof(ACTIVITY));
@@ -42,13 +40,22 @@ ACTIVITY *initActivities(void)
                 break;
             }
 
-            newActivity->next = NULL;
+            ACTIVITY_NODE *node = malloc(sizeof(ACTIVITY_NODE));
+            if (!node)
+            {
+                free(newActivity);
+                break;
+            }
+
+            node->activity = newActivity;
+            node->next = NULL;
 
             if (!head)
-                head = newActivity;
+                head = node;
             else
-                current->next = newActivity;
+                tail->next = node;
 
+            tail = node;
             current = newActivity;
         }
         else if (current)
@@ -60,8 +67,6 @@ ACTIVITY *initActivities(void)
             {
                 trim(key);
                 trim(value);
-
-                /* ---------- STRINGS ---------- */
 
                 if (strcmp(key, "name") == 0)
                 {
@@ -154,9 +159,10 @@ ACTIVITY *initActivities(void)
     return head;
 }
 
-void showActivities(ACTIVITY * activity){
+
+void showActivities(ACTIVITY_NODE * activity){
     while (activity != NULL){
-        showActivity(activity);
+        showActivity(activity->activity);
         activity = activity->next;
     }
 }
@@ -170,3 +176,42 @@ void showActivity(ACTIVITY * activity){
         printf("PA : %d\n\n",activity->PA);
     }
 }
+
+
+ACTIVITY_NODE *getAvailableActivities(CULT *cult, GAME_CONF *conf){
+    if(cult == NULL || conf == NULL){
+        return NULL;
+    }
+
+    ACTIVITY_NODE *result = NULL;
+    ACTIVITY_NODE *current = conf->allActivities;
+
+    while(current != NULL){
+
+        if(isSpawnConditionChecked(cult,current->activity->sponCondition)){
+
+            ACTIVITY_NODE *node = malloc(sizeof(ACTIVITY_NODE));
+            node->activity = current->activity;
+
+            node->next = result;
+            result = node; // attention ici la liste est construite a l'envers dernier entrer = tete de liste
+        }
+
+        current = current->next;
+    }
+
+    return result;
+}
+
+
+void freeActivityNodes(ACTIVITY_NODE *list){
+
+    ACTIVITY_NODE *tmp;
+
+    while(list){
+        tmp = list;
+        list = list->next;
+        free(tmp);
+    }
+}
+

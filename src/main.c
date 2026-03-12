@@ -7,7 +7,7 @@ int main(){
 
     CULT *cult = initCult();
     GAME_CONF *conf = initConf();
-    //showGroup(conf->allPeoples);
+    showGroup(conf->allPeoples);
 
     runGameUI(cult, conf);
 
