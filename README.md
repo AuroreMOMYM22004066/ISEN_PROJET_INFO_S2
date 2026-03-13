@@ -23,5 +23,5 @@ Pour les convertir au format Linux (LF) :
 
 Avec dos2unix (disponible dans MSYS2 ou Cygwin) :
 ```
-dos2unix *.c *.h Makefile
+dos2unix [nom du fichier]
 ```
