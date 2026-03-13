@@ -289,7 +289,7 @@ int isMemberIsInGroup(MEMBER * member, GROUP * group){
 
     GROUP * current = group;
     while(current != NULL && current->member != NULL){
-        if(member == current->member){ // on compare les adr memoire
+        if(member == current->member && isMembersEquals(current->member, member)){ // on compare les adr memoire
             return TRUE;
         }  
         current = current->next;
@@ -302,8 +302,7 @@ int isMembersEquals(MEMBER * member1, MEMBER * member2){
     if(member1 == NULL || member2 == NULL) {
         return 0;
     }
-    int result = 1;
-    //TODO
+    return strcmp(member1->name, member2->name) == 0;
 }
 
 

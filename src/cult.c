@@ -212,7 +212,7 @@ float getVisibility(CULT *culte){
     return membersVisibility + assignsVisibility;
 }
 
-float getVisibilityOfMembers(GROUP *members){
+float   getVisibilityOfMembers(GROUP *members){
     if (members == NULL) {
         return 0.0;
     }
@@ -291,8 +291,10 @@ float getIllegalityOfGroup(GROUP *group){
 }
 
 
-MEMBER * hireMember(GAME_CONF * conf){
-    GROUP *spawnList = generateSpawnMember(conf);
+MEMBER * hireMember(CULT * cult, GAME_CONF * conf){
+    if(cult == NULL || conf == NULL) return NULL;
+
+    GROUP *spawnList = generateSpawnMember(conf, cult->members);
 
     if(spawnList == NULL){
         showEventPopup("Recrutement", "Personne ne souhaite rejoindre votre culte.");
@@ -317,7 +319,7 @@ MEMBER * hireMember(GAME_CONF * conf){
     return newMember;
 }
 
-GROUP * generateSpawnMember(GAME_CONF * conf){
+GROUP * generateSpawnMember(GAME_CONF * conf, GROUP * group){
     if(conf == NULL || conf->allPeoples == NULL)
         return NULL;
 
@@ -328,7 +330,7 @@ GROUP * generateSpawnMember(GAME_CONF * conf){
     {
         float r = (float)rand() / RAND_MAX;
 
-        if(r < current->member->spawnChance ) 
+        if(r < current->member->spawnChance && !isMemberIsInGroup(current->member, group)) 
         {
             // on ajoute le prototype dans la liste de spawn
             GROUP *node = createGroupNode(current->member);

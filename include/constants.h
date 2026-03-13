@@ -14,6 +14,7 @@
 #define MAX_LEGITIMITY 10
 #define NB_PA 3 // nb de point d'action par tour
 #define NB_ROUNDS_FAST_GAME 10
+#define MAX_CONTROL 1
 
 #define NB_MAX_SPAWN 5
 

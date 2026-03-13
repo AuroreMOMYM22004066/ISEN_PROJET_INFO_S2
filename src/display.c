@@ -34,7 +34,7 @@ void createWindows(UI *ui) {
     int h_status = 7;
     int h_actions = 10;
     int h_members = 10;
-    int h_log = 5;
+    int h_log = 10;
     int w = COLS;
 
     ui->statusWin = newwin(h_status, w, 0, 0);
@@ -106,34 +106,34 @@ void drawActions(UI *ui) {
 
 // ---------- DRAW MEMBERS ----------
 void drawMembers(UI *ui, CULT *cult) {
-
     GROUP *members = cult->members;
 
     werase(ui->memberWin);
     box(ui->memberWin,0,0);
 
+    int h = getmaxy(ui->memberWin) - 2; // lignes disponibles pour membres
     int y = 1;
     int idx = 0;
 
     GROUP *current = members;
 
-    while(current != NULL && y < 9) {
-
-        if(idx >= ui->memberOffset) {
-
-            mvwprintw(ui->memberWin,y,2,"%s Control: %.2f Etat: %s",
-                current->member->name,
-                current->member->control,
-                isMemberAvailable(current->member, cult->assigns)?"Libre":"Occupe");
-
-            y++;
-        }
-
+    // avancer jusqu'à memberOffset
+    while(current && idx < ui->memberOffset) {
         current = current->next;
         idx++;
     }
 
-    if(current != NULL)
+    while(current && y <= h) {
+        mvwprintw(ui->memberWin,y,2,"%s Control: %.2f Etat: %s",
+            current->member->name,
+            current->member->control,
+            isMemberAvailable(current->member, cult->assigns)?"Libre":"Occupe");
+        y++;
+        current = current->next;
+    }
+
+    // si reste des membres non affichés
+    if(current)
         mvwprintw(ui->memberWin,y,2,"▼");
 
     wrefresh(ui->memberWin);
@@ -169,7 +169,11 @@ void drawAssigns(UI *ui, CULT *cult){
 
     while(current != NULL && y < 4){
 
-        if(current->activity && current->group){
+        if(current->activity != NULL && current->group != NULL){
+            if(isAssignFinished(current)){
+                current = current->next;
+                continue;
+            }
 
             int remaining = current->activity->time - current->time;
 
@@ -199,6 +203,7 @@ void drawAssigns(UI *ui, CULT *cult){
 
     wrefresh(ui->logWin);
 }
+
 // ---------- EVENT POPUP ----------
 void showEventPopup(char *title, char *desc) {
     int h = 10, w = 50;
@@ -218,6 +223,129 @@ void showEventPopup(char *title, char *desc) {
     while(getch()!='\n');
 
     delwin(popup);
+}
+
+// ---------- START SCREEN ----------
+void showStartScreen(){
+
+    clear();
+
+    const char *art[] = {
+"##################################################################################################################",
+"##################################################################################################################",
+"##################################################################################################################",
+"##################################################################################################################",
+"##################################################################################################################",
+"#######################################################+++########################################################",
+"######################################################+++++#######################################################",
+"#####################################################+++++++######################################################",
+"####################################################+++++++++#####################################################",
+"####################################################+++++++++#####################################################",
+"###################################################+++++++++++####################################################",
+"##################################################+++++++++++++###################################################",
+"##################################################+++++++++++++###################################################",
+"#################################################+++++-----+++++##################################################",
+"#################################################++-----------++##################################################",
+"################################################+++-----------+++#################################################",
+"###############################################+++-------------+++################################################",
+"##############################################+++---------------+++###############################################",
+"#######################++++++++++++++++++++++++++---------------++++++++++++++++++++++++++########################",
+"###################+++++++++++++++++++++++++++++-----------------+++++++++++++++++++++++++++++####################",
+"####################++++++++++++++++++++++++++++-----------------++++++++++++++++++++++++++++#####################",
+"######################+++++++++++++++++++++++++++--------------++++++++++++++++++++++++++++#######################",
+"########################+++++++++++++++++++++++++++-+-------+-+++++++++++++++++++++++++++#########################",
+"##########################+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++###########################",
+"#############################+++++++++++++++++++++++++++++++++++++++++++++++++++++++##############################",
+"###############################+++++++++++++++++++++++++++++++++++++++++++++++++++################################",
+"##################################+++++++++++++++++++++++++++++++++++++++++++++###################################",
+"####################################+++++++++++++++++++++++++++++++++++++++++#####################################",
+"######################################+++++++++++++++++++++++++++++++++++++#######################################",
+"#######################################+++++++++++++++++++++++++++++++++++########################################",
+"#######################################+++++++++++++++++++++++++++++++++++########################################",
+"######################################+++++++++++++++++++++++++++++++++++++#######################################",
+"######################################+++++++++++++++++++++++++++++++++++++#######################################",
+"#####################################+++++++++++++++++++++++++++++++++++++++######################################",
+"####################################+++++++++++++++++++++++++++++++++++++++++#####################################",
+"####################################+++++++++++++++++++++++++++++++++++++++++#####################################",
+"###################################+++++++++++++++++++#####+++++++++++++++++++####################################",
+"###################################++++++++++++++++###########++++++++++++++++####################################",
+"##################################++++++++++++++#################++++++++++++++###################################",
+"##################################++++++++++++#####################++++++++++++###################################",
+"#################################++++++++++###########################++++++++++##################################",
+"#################################+++++++#################################+++++++##################################",
+"#################################++++#######################################++++##################################",
+"##################################################################################################################",
+"##################################################################################################################",
+"##################################################################################################################",
+"##################################################################################################################",
+"##################################################################################################################"
+    };
+
+    int lines = sizeof(art)/sizeof(art[0]);
+
+    int startY = (LINES - lines) / 2;
+
+    for(int i=0;i<lines;i++){
+        mvprintw(startY + i, (COLS - strlen(art[i]))/2 , "%s", art[i]);
+    }
+
+    mvprintw(LINES-3,(COLS-30)/2,"Appuyez sur ENTER pour commencer");
+
+    refresh();
+
+    while(getch()!='\n');
+}
+
+// ---------- END SCREEN ----------
+void showEndScreen(float score){
+
+    clear();
+
+    const char *art[]={
+"FELICITATIONS !",
+"",
+"Votre culte a termine la partie rapide."
+    };
+
+    int lines = sizeof(art)/sizeof(art[0]);
+
+    int startY = (LINES-lines)/2;
+
+    for(int i=0;i<lines;i++){
+        mvprintw(startY+i,(COLS-strlen(art[i]))/2,"%s",art[i]);
+    }
+
+    mvprintw(startY+lines+2,(COLS-20)/2,"Score : %.2f",score);
+
+    mvprintw(LINES-3,(COLS-30)/2,"Appuyez sur ENTER");
+
+    refresh();
+
+    while(getch()!='\n');
+}
+
+// ---------- VICTORY SCREEN ----------
+void showVictoryScreen(float legitimacy){
+
+    clear();
+
+    const char *art[]={
+"Votre culte domine le monde."
+    };
+
+    int lines = sizeof(art)/sizeof(art[0]);
+    int startY = (LINES-lines)/2;
+
+    for(int i=0;i<lines;i++){
+        mvprintw(startY+i,(COLS-strlen(art[i]))/2,"%s",art[i]);
+    }
+
+    mvprintw(startY+lines+2,(COLS-30)/2,"Legitimite finale : %.2f",legitimacy);
+    mvprintw(LINES-3,(COLS-30)/2,"Appuyez sur ENTER");
+
+    refresh();
+
+    while(getch()!='\n');
 }
 
 // ---------- SELECT MEMBER POPUP ----------
@@ -511,16 +639,42 @@ int confirmPopup(char *text){
     }
 }
 
+// ---------- INPUT POPUP ----------
+void inputPopup(char *title, char *buffer, int size){
+
+    int h = 7, w = 50;
+    int y = (LINES-h)/2;
+    int x = (COLS-w)/2;
+
+    WINDOW *popup = newwin(h,w,y,x);
+    box(popup,0,0);
+
+    mvwprintw(popup,1,2,"%s",title);
+    mvwprintw(popup,3,2,"> ");
+
+    echo();
+    curs_set(1);
+
+    wrefresh(popup);
+    wgetnstr(popup,buffer,size-1);
+
+    noecho();
+    curs_set(0);
+
+    delwin(popup);
+}
 
 // ---------- RECRUITMENT HANDLER ----------
 void handleRecruitment(CULT *cult, GAME_CONF *conf) {
+    if (cult == NULL || conf == NULL) return;
+
     if(cult->pa < 1){
         showEventPopup("PA insuffisants", "Vous n'avez pas assez de PA pour cette action.");
         return;
     }
     cult->pa -= 1; // coût de génération de la liste
 
-    GROUP *spawnList = generateSpawnMember(conf);
+    GROUP *spawnList = generateSpawnMember(conf, cult->members);
     if(spawnList == NULL){
         showEventPopup("Recrutement", "Personne ne souhaite rejoindre votre culte.");
         return;
@@ -600,6 +754,10 @@ void handleNextDay(CULT *cult){
     while (currentAssign != NULL){
         if(currentAssign->activity != NULL && !isAssignFinished(currentAssign)){
             currentAssign->time += 1;
+
+            if(isAssignFinished(currentAssign)){
+                resolveAssign(currentAssign, cult);
+            }
         }
         currentAssign = currentAssign->next;
     }
@@ -614,7 +772,6 @@ void handleNextDay(CULT *cult){
     
     showEventPopup("Nouveau jour", "Les PA ont été réinitialisés.");
 }
-
 
 // ---------- HANDLE ACTION ----------
 void handleAction(int action, CULT *cult, GAME_CONF *conf){
@@ -632,11 +789,76 @@ void handleAction(int action, CULT *cult, GAME_CONF *conf){
     }
 }
 
+// ---------- SELECT GAME MODE ----------
+GAME_MODE selectGameMode(){
 
+    char *choices[]={
+        "Partie normale",
+        "Partie rapide",
+        "Quitter"
+    };
+
+    int count=3;
+    int index=0;
+
+    while(1){
+
+        clear();
+
+        mvprintw(5,(COLS-20)/2,"CHOISIR MODE DE JEU");
+
+        for(int i=0;i<count;i++){
+
+            if(i==index) attron(A_REVERSE);
+
+            mvprintw(8+i,(COLS-20)/2,"%s",choices[i]);
+
+            if(i==index) attroff(A_REVERSE);
+        }
+
+        refresh();
+
+        int ch=getch();
+
+        if(ch==KEY_UP){
+            index--;
+            if(index<0) index=0;
+        }
+
+        if(ch==KEY_DOWN){
+            index++;
+            if(index>=count) index=count-1;
+        }
+
+        if(ch=='\n'){
+            if(index==0) return GAME_NORMAL;
+            if(index==1) return GAME_FAST;
+            return -1;
+        }
+    }
+}
+
+// ---------- START GAME ----------
+void startGame(GAME_CONF *conf){
+
+    GAME_MODE mode = selectGameMode();
+
+    if(mode == -1)
+        return;
+
+    CULT *cult = initCultUI();
+
+    int maxRounds = 0;
+
+    if(mode == GAME_FAST)
+        maxRounds = NB_ROUNDS_FAST_GAME;
+
+    runGameUI(cult,conf,mode,maxRounds);
+}
 
 
 // ---------- GAME LOOP ----------
-void runGameUI(CULT *cult, GAME_CONF *conf){
+void runGameUI(CULT *cult, GAME_CONF *conf, GAME_MODE mode, int maxRounds){
     UI ui;
     ui.selectedAction = 0;
     ui.memberOffset = 0;
@@ -644,10 +866,32 @@ void runGameUI(CULT *cult, GAME_CONF *conf){
     
     cult->pa = NB_PA; // PA initial
     initUI();
+    //showStartScreen();
     createWindows(&ui);
 
     while(1){        
         updateScreen(&ui, cult);
+
+        // ---- CONDITION VICTOIRE ----
+        if(mode == GAME_NORMAL){
+            if(getLegitimity(cult) >= MAX_LEGITIMITY){
+                showVictoryScreen(MAX_LEGITIMITY);
+                break;
+            }
+        }
+
+        // ---- CONDITION FIN FAST GAME ----
+        if(mode == GAME_FAST){
+            if(cult->elapsedTime >= maxRounds){
+                
+                char buffer[128];
+                snprintf(buffer,128,"Score final : %.2f",getLegitimity(cult));
+
+                showEndScreen(getLegitimity(cult));
+                break;
+            }
+        }
+        
         int ch = getch();
         if(ch == 27) break; // ESC
 
@@ -680,9 +924,7 @@ void runEvent(CULT *cult, GAME_CONF *conf){
     EVENT *event = getEvent(cult, conf);
     if(event != NULL){
         showEventPopup(event->name, event->description);
-
-        // appliquer impact
-        //cult->funds += event->impact->fund;
+        applyEventImpact(cult, event);
     } 
 }
 

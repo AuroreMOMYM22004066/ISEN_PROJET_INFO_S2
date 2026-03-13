@@ -49,6 +49,35 @@ CULT * initCult(void){
 }
 
 
+
+CULT *initCultUI(){
+
+    CULT *cult = malloc(sizeof(CULT));
+    if(!cult) return NULL;
+
+    inputPopup("Nom du Leader Supreme ?", cult->nameCultLeader, NAME_SIZE);
+
+    char buffer[100];
+    snprintf(buffer,sizeof(buffer),
+        "Nom du Culte de %s ?",cult->nameCultLeader);
+
+    inputPopup(buffer, cult->nameCult, NAME_SIZE);
+
+    snprintf(buffer,sizeof(buffer),
+        "Ideologie du culte %s ?",cult->nameCult);
+
+    inputPopup(buffer, cult->ideology, NAME_SIZE);
+
+    cult->elapsedTime = 1;
+    cult->pa = NB_PA;
+    cult->funds = 5.0f;
+    cult->members = NULL;
+    cult->assigns = NULL;
+
+    return cult;
+}
+
+
 GAME_CONF * initConf(){
     GAME_CONF * conf = NULL;
     conf = malloc(sizeof(GAME_CONF));

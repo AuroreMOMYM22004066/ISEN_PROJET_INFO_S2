@@ -231,3 +231,32 @@ void showEvents(EVENT *event)
 }
 
 
+void applyEventImpact(CULT *cult, EVENT *event){
+    if(cult == NULL || event == NULL)
+        return;
+
+    // --- ressources du culte ---
+    cult->funds += event->impact->fund;
+
+    // --- control des membres ---
+    GROUP *g = cult->members;
+
+    while(g){
+
+        MEMBER *m = g->member;
+
+        if(m){
+            float percent = event->impact->control / 100.0f;
+
+            m->control = m->control * (1.0f + percent);
+
+            if(m->control < 0)
+                m->control = 0;
+
+            if(m->control > MAX_CONTROL)
+                m->control = MAX_CONTROL;
+        }
+
+        g = g->next;
+    }
+}

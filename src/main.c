@@ -5,11 +5,15 @@ int main(){
 
     srand(time(NULL));
 
-    CULT *cult = initCult();
     GAME_CONF *conf = initConf();
-    showGroup(conf->allPeoples);
 
-    runGameUI(cult, conf);
+    initUI();
+
+    showStartScreen();
+
+    startGame(conf);
+
+    endUI();
 
     return 0;
 }

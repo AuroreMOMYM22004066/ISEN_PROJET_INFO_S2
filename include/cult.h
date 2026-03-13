@@ -10,6 +10,7 @@
  */
 void trim(char *str); 
 CULT * initCult();
+CULT *initCultUI();
 GAME_CONF * initConf(); //charge la conf 
 
 /**
@@ -41,8 +42,8 @@ void showCulte(CULT * cult);
  * recruter un membre 
  * assigner des membres a une activité (c'est a ça que sert la liste all activities)
 */ 
-MEMBER* hireMember(GAME_CONF * conf); 
-GROUP * generateSpawnMember(GAME_CONF * conf);
+MEMBER * hireMember(CULT * cult, GAME_CONF * conf);
+GROUP * generateSpawnMember(GAME_CONF * conf, GROUP * group);
 ASSIGN* assignActivity(GAME_CONF * conf); 
 
 
@@ -71,6 +72,7 @@ EVENT * initEvents(void);
 EVENT * getEvent(CULT * cult, GAME_CONF * conf); // regarde tout les éléments présent dans la list event de conf et en tire un parmis tous ceux elligible 
 void showOneEvent(EVENT * event);
 void showEvents(EVENT * event);
+void applyEventImpact(CULT *cult, EVENT *event);
 
 /**
  * member.c
@@ -99,6 +101,8 @@ GROUP *getFreeMembers(CULT *cult);
  */
 ASSIGN * assignActivityMembers(ACTIVITY *activity, GROUP *group);
 int isAssignFinished(ASSIGN * assign);
+int checkActivitySuccess(ASSIGN *assign, CULT *cult);
+void resolveAssign(ASSIGN *assign, CULT *cult);
 void showOneAssign(ASSIGN * assign);
 void showAssigns();
 ASSIGN * addAssign(CULT *cult, ASSIGN *assign);
@@ -128,11 +132,14 @@ void drawMembers(UI *ui, CULT *cult);
 void drawAssigns(UI *ui, CULT *cult);
 void drawProgressBar(WINDOW *win, int y, int x, int width, float value);
 void showEventPopup(char *title, char *desc);
+void showStartScreen();
+void showEndScreen(float score);
+void showVictoryScreen(float legitimacy);
 MEMBER *selectMemberPopup(GROUP *list);
 GROUP *selectMembersPopup(GROUP *list);
 ACTIVITY *selectActivityPopup(ACTIVITY_NODE *list);
 int confirmPopup(char *text);
-
+void inputPopup(char *title, char *buffer, int size);
 
 void handleInput(int ch);
 
@@ -140,7 +147,7 @@ void handleRecruitment(CULT *cult, GAME_CONF *conf);
 void handleActivity(CULT *cult, GAME_CONF *conf);
 void handleNextDay(CULT *cult);
 void handleAction(int action, CULT *cult, GAME_CONF *conf);
-void runGameUI(CULT *cult, GAME_CONF *conf);
+void runGameUI(CULT *cult, GAME_CONF *conf, GAME_MODE mode, int maxRounds);
 void runEvent(CULT *cult, GAME_CONF *conf);
 void updateScreen(UI *ui, CULT *cult);
 

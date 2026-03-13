@@ -105,8 +105,13 @@ typedef struct {
     WINDOW *logWin;
     int selectedAction;
     int memberOffset;
-    int assignOffset; 
+    int assignOffset;
 } UI;
+
+typedef enum {
+    GAME_NORMAL,
+    GAME_FAST
+} GAME_MODE;
 
 
 

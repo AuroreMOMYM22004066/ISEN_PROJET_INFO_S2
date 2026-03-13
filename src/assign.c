@@ -39,3 +39,44 @@ ASSIGN * addAssign(CULT *cult, ASSIGN *assign){
 
     return cult->assigns;
 }
+
+int checkActivitySuccess(ASSIGN *assign, CULT *cult){
+
+    if(assign == NULL || assign->activity == NULL || cult == NULL)
+        return 0;
+
+    CONDITION *cond = assign->activity->successCondition;
+
+    if(cond == NULL)
+        return 1;
+
+    if(getLegitimityOfMembers(assign->group) < cond->minLegitimity)
+        return 0;
+
+    if(getVisibilityOfMembers(assign->group) < cond->minVisibility)
+        return 0;
+
+    if(getIllegalityOfGroup(assign->group) < cond->minIllegality)
+        return 0;
+
+    int members = 0;
+    GROUP *g = assign->group;
+
+    while(g){
+        members++;
+        g = g->next;
+    }
+
+    if(members < cond->minMember)
+        return 0;
+
+    return 1;
+}
+
+
+void resolveAssign(ASSIGN *assign, CULT *cult){
+    if(assign == NULL || cult == NULL)
+        return;
+
+    assign->isSuccess = checkActivitySuccess(assign, cult);
+}
